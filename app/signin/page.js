@@ -1,70 +1,45 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import Link from "next/link"
-import { supabase } from "@/lib/supabase/client"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
+import { useState } from "react";
+import { useAuth } from "/app/context/AuthContext";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
+import Link from "next/link";
 
 export default function Signin() {
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState("")
-  const router = useRouter()
+  const { session, loading: authLoading, login, googleLogin } = useAuth();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleEmailSignIn = async (e) => {
-    e.preventDefault()
-    setError("")
-    setLoading(true)
+    e.preventDefault();
+    setError("");
+    setLoading(true);
 
     try {
-      if (!supabase) {
-        throw new Error("Supabase client not initialized. Check your environment variables.")
-      }
-
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      })
-
-      if (error) throw error
-
-      console.log("Sign-in Success:", data)
-      router.push("/profile/dashboard")
+      await login(email, password);
     } catch (error) {
-      console.error("Sign-in Error:", error.message)
-      setError(error.message)
+      setError(error.message);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const handleGoogleSignIn = async () => {
-    setLoading(true)
-    setError("")
+    setLoading(true);
+    setError("");
 
     try {
-      if (!supabase) {
-        throw new Error("Supabase client not initialized. Check your environment variables.")
-      }
-
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: { redirectTo: `${window.location.origin}/profile/dashboard` },
-      })
-
-      if (error) throw error
-      console.log("Google Sign-In Success:", data)
+      await googleLogin();
     } catch (error) {
-      console.error("Google Sign-In Error:", error.message)
-      setError(error.message)
+      setError(error.message);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center p-4 bg-gradient-to-br from-purple-100 to-purple-50">
@@ -97,7 +72,7 @@ export default function Signin() {
               size="sm"
               className="flex items-center gap-2 text-black border-gray-300 hover:bg-gray-100 rounded-xl px-6 py-5"
               onClick={handleGoogleSignIn}
-              disabled={loading}
+              disabled={loading || authLoading}
             >
               {loading ? (
                 "Signing in..."
@@ -137,7 +112,7 @@ export default function Signin() {
               <Input
                 type="email"
                 placeholder="Enter your email"
-                className="w-full text-black rounded-xl"
+                className="w-full text-white rounded-xl"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -147,7 +122,7 @@ export default function Signin() {
               <Input
                 type="password"
                 placeholder="Enter your password"
-                className="w-full text-black rounded-xl"
+                className="w-full text-white rounded-xl"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
@@ -161,7 +136,7 @@ export default function Signin() {
             <Button
               type="submit"
               className="w-full bg-purple-600 hover:bg-purple-700 text-white rounded-xl py-6 font-medium"
-              disabled={loading}
+              disabled={loading || authLoading}
             >
               {loading ? "Signing in..." : "Sign In"}
             </Button>
@@ -190,6 +165,5 @@ export default function Signin() {
         </CardFooter>
       </Card>
     </div>
-  )
+  );
 }
-

@@ -15,6 +15,8 @@ import {
 
 export default function Signup() {
   const [loading, setLoading] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const router = useRouter();
 
   const handleGoogleSignup = async () => {
@@ -40,9 +42,33 @@ export default function Signup() {
     }
   };
 
+  const handleEmailSignUp = async () => {
+    setLoading(true);
+    try {
+      if (!supabase) {
+        throw new Error(
+          "Supabase client not initialized. Check your environment variables."
+        );
+      }
+  
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+      });
+  
+      if (error) throw error;
+      console.log("Email Sign-Up Success:", data);
+      router.push("/profile/dashboard"); // Optional: redirect after successful signup
+    } catch (error) {
+      console.error("Email Sign-Up Error:", error.message);
+    } finally {
+      setLoading(false);
+    }
+  };  
+
   return (
-    <div className="min-h-screen w-full flex items-center justify-center p-4 bg-gradient-to-br from-purple-100 to-purple-50">
-      <Card className="w-full max-w-md shadow-xl bg-white text-black rounded-2xl overflow-hidden">
+    <div className="min-h-screen w-full flex items-center justify-center p-4 bg-gradient-to-br from-gray-900">
+      <Card className="w-full max-w-md shadow-xl bg-purple-200 text-gray rounded-2xl overflow-hidden">
         <CardHeader className="space-y-6 text-center pb-0">
           <div className="mx-auto w-14 h-14 rounded-full bg-purple-600 flex items-center justify-center shadow-md">
             <svg
@@ -70,7 +96,7 @@ export default function Signup() {
             <Button
               variant="outline"
               size="sm"
-              className="flex items-center gap-2 text-black border-gray-300 hover:bg-gray-100 rounded-xl px-6 py-5"
+              className="flex items-center gap-2 text-white border-gray-300 hover:bg-gray-100 rounded-xl px-6 py-5"
               onClick={handleGoogleSignup}
               disabled={loading}
             >
@@ -109,21 +135,29 @@ export default function Signup() {
 
           <div className="space-y-4">
             <div className="space-y-2">
-              <Input
-                type="email"
-                placeholder="Enter your email"
-                className="w-full text-black rounded-xl"
-              />
+            <Input
+              type="email"
+              placeholder="Enter your email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full text-white rounded-xl"
+            />
             </div>
             <div className="space-y-2">
-              <Input
-                type="password"
-                placeholder="Create a password"
-                className="w-full text-black rounded-xl"
-              />
+            <Input
+              type="password"
+              placeholder="Create a password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full text-white rounded-xl"
+            />
             </div>
-            <Button className="w-full bg-purple-600 hover:bg-purple-700 text-white rounded-xl py-6 font-medium">
-              Sign Up
+            <Button
+              onClick={handleEmailSignUp}
+              disabled={loading}
+              className="w-full bg-purple-600 hover:bg-purple-700 text-white rounded-xl py-6 font-medium"
+            >
+              {loading ? "Signing up..." : "Sign Up"}
             </Button>
           </div>
         </CardContent>

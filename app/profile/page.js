@@ -1,33 +1,90 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { Navbar } from "@/components/layout/navbar"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Camera, ArrowLeft } from "lucide-react"
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Navbar } from "@/components/layout/navbar";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Camera, ArrowLeft } from "lucide-react";
+import { supabase } from "@/lib/supabase/client"; // Assuming the Supabase client is correctly set up
+import { useAuth } from "/app/context/AuthContext"; // Importing the useAuth hook
 
 export default function ProfilePage() {
-  const router = useRouter()
-  const [user, setUser] = useState({
-    name: "John Doe",
-    email: "john@example.com",
-    avatarUrl: null,
-    bio: "AI Communication Enthusiast"
-  })
+  const { session, loading: authLoading, logout } = useAuth(); // Using useAuth to get session data
+  const router = useRouter();
+  const [avatarFile, setAvatarFile] = useState(null);
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e) => {
-    e.preventDefault()
-    // TODO: Implement Supabase update
-    console.log("Profile updated:", user)
-    router.push("/profile/dashboard")
+  if (authLoading) {
+    return <div>Loading...</div>;
   }
+
+  // If no session exists (user is not logged in)
+  if (!session) {
+    router.push("/login"); // Redirect to login if no session
+    return null;
+  }
+
+  const user = {
+    name: session.user?.user_metadata?.full_name || "John Doe",
+    email: session.user?.email || "john@example.com",
+    avatarUrl: session.user?.user_metadata?.avatar_url || null,
+    bio: session.user?.user_metadata?.bio || "AI Communication Enthusiast",
+  };
+
+  // Handle file input for avatar
+  const handleAvatarChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setAvatarFile(file);
+    }
+  };
+
+  // Update profile function
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    setLoading(true);
+
+    // If there's a new avatar, upload it to Supabase Storage
+    let avatarUrl = user.avatarUrl;
+    if (avatarFile) {
+      const fileExt = avatarFile.name.split(".").pop();
+      const fileName = `${user.email}_avatar.${fileExt}`;
+      const { data, error } = await supabase.storage
+        .from("avatars")
+        .upload(fileName, avatarFile);
+
+      if (error) {
+        console.error("Error uploading avatar:", error.message);
+        setLoading(false);
+        return;
+      }
+
+      // Get the public URL of the uploaded image
+      avatarUrl = data?.path ? supabase.storage.from("avatars").getPublicUrl(data.path).publicURL : null;
+    }
+
+    // Update the user profile in Supabase
+    const { error: updateError } = await supabase
+      .from("profiles")
+      .upsert({ email: user.email, name: user.name, bio: user.bio, avatar_url: avatarUrl });
+
+    if (updateError) {
+      console.error("Error updating profile:", updateError.message);
+    } else {
+      console.log("Profile updated:", user);
+      router.push("/profile/dashboard");
+    }
+
+    setLoading(false);
+  };
 
   const handleCancel = () => {
-    router.push("/profile/dashboard")
-  }
+    router.push("/profile/dashboard");
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
@@ -55,7 +112,7 @@ export default function ProfilePage() {
                   <Avatar className="h-32 w-32">
                     <AvatarImage src={user.avatarUrl} />
                     <AvatarFallback className="bg-purple-600 text-2xl">
-                      {user.name.split(' ').map(n => n[0]).join('')}
+                      {user.name.split(" ").map((n) => n[0]).join("")}
                     </AvatarFallback>
                   </Avatar>
                   <Button
@@ -66,6 +123,12 @@ export default function ProfilePage() {
                   >
                     <Camera className="h-4 w-4" />
                   </Button>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleAvatarChange}
+                  />
                 </div>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
                   Click to change your profile picture
@@ -75,7 +138,10 @@ export default function ProfilePage() {
               {/* Form Fields */}
               <div className="space-y-4">
                 <div>
-                  <label htmlFor="name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  <label
+                    htmlFor="name"
+                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                  >
                     Name
                   </label>
                   <Input
@@ -87,7 +153,10 @@ export default function ProfilePage() {
                 </div>
 
                 <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  <label
+                    htmlFor="email"
+                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                  >
                     Email
                   </label>
                   <Input
@@ -100,7 +169,10 @@ export default function ProfilePage() {
                 </div>
 
                 <div>
-                  <label htmlFor="bio" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  <label
+                    htmlFor="bio"
+                    className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1"
+                  >
                     Bio
                   </label>
                   <Textarea
@@ -118,8 +190,8 @@ export default function ProfilePage() {
                 <Button type="button" variant="outline" onClick={handleCancel}>
                   Cancel
                 </Button>
-                <Button type="submit">
-                  Save Changes
+                <Button type="submit" disabled={loading}>
+                  {loading ? "Saving..." : "Save Changes"}
                 </Button>
               </div>
             </form>
@@ -127,5 +199,5 @@ export default function ProfilePage() {
         </div>
       </main>
     </div>
-  )
-} 
+  );
+}

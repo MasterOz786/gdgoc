@@ -6,11 +6,18 @@ import { UserInfoPanel } from "@/components/features/user-portal/user-info-panel
 import { DashboardWidgets } from "@/components/features/user-portal/dashboard-widgets";
 import { SettingsPanel } from "@/components/features/user-portal/settings-panel";
 import "@/styles/dashboard.css";
+import { useAuth } from '/app/context/AuthContext';
+import { useRouter } from "next/navigation";
 
-export default function DashboardPage() {
+export default function DashboardPage() {  
+  const { session } = useAuth();
+  const router = useRouter();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    if (!session) {
+      router.push("/");
+    }
     setMounted(true);
     document.body.classList.add("dark"); // Enforce dark mode
     return () => {

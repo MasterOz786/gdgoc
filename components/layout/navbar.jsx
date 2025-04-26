@@ -1,13 +1,26 @@
-"use client"
+"use client";
 
-import { motion } from "framer-motion"
-import { Button } from "../ui/button"
-import { User, Trophy } from "lucide-react"
-import Link from "next/link"
-import { MobileNav } from "./mobile-navbar"
-import { navItems } from "./nav-items"
+import { motion } from "framer-motion";
+import { Button } from "../ui/button";
+import { User, Trophy } from "lucide-react";
+import Link from "next/link";
+import { MobileNav } from "./mobile-navbar";
+import { useAuth } from "/app/context/AuthContext";
 
 export function Navbar() {
+  const { session, loading, logout } = useAuth();
+  const navItems = [
+    { name: "Features", href: "/#features" },
+    { name: "How It Works", href: "/#how-it-works" },
+    { name: "Character", href: "/character" },
+    { name: "Research", href: "/#research" },
+    { name: "About Us", href: "/#about" },
+  ];
+
+  if (loading) {
+    return null; // or show a spinner if you want
+  }
+
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm border-b border-gray-200 dark:border-gray-800">
       <nav className="container mx-auto px-4 h-16 flex justify-between items-center">
@@ -57,23 +70,32 @@ export function Navbar() {
               <Trophy className="h-5 w-5 text-purple-600 dark:text-purple-400" />
             </motion.div>
           </Link>
-          <Link href="/profile/dashboard">
-            <motion.div
-              whileHover={{ scale: 1.1 }}
-              className="p-2 rounded-full hover:bg-purple-100 dark:hover:bg-purple-900/50 transition-colors"
-            >
-              <User className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-            </motion.div>
-          </Link>
-          <div className="hidden md:block">
-            <Link href="/signup">
-              <Button className="bg-purple-600 hover:bg-purple-700 text-white rounded-full px-6">
-                Sign Up
+
+          {session ? (
+            <>
+              <Link href="/profile/dashboard">
+                <motion.div
+                  whileHover={{ scale: 1.1 }}
+                  className="p-2 rounded-full hover:bg-purple-100 dark:hover:bg-purple-900/50 transition-colors"
+                >
+                  <User className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                </motion.div>
+              </Link>
+              <Button onClick={logout} className="bg-red-500 hover:bg-red-600 text-white rounded-full px-6">
+                Logout
               </Button>
-            </Link>
-          </div>
+            </>
+          ) : (
+            <div className="hidden md:block">
+              <Link href="/signup">
+                <Button className="bg-purple-600 hover:bg-purple-700 text-white rounded-full px-6">
+                  Sign Up
+                </Button>
+              </Link>
+            </div>
+          )}
         </motion.div>
       </nav>
     </header>
-  )
+  );
 }

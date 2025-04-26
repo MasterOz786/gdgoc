@@ -3,10 +3,16 @@ import Link from "next/link"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { Button } from "@/components/ui/button"
 import { Menu } from "lucide-react"
-import { navItems } from "./nav-items"
 
 export function MobileNav() {
   const [open, setOpen] = React.useState(false)
+  const navItems = [
+    { name: "Features", href: "#features" },
+    { name: "How It Works", href: "#how-it-works" },
+    { name: "Character", href: "character" },
+    { name: "Research", href: "#research" },
+    { name: "About Us", href: "#about" },
+  ];
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
